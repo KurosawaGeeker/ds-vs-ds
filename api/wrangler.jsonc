@@ -1,0 +1,15 @@
+{
+  "name": "ds-vs-ds-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "ff0ba28c202a47ac5518df8074d9481b",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "vars": { "ALLOWED_ORIGIN": "https://kurosawageeker.github.io" },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "ds-vs-ds-votes",
+    "database_id": "cc2b3b81-4649-46f7-94c0-06f8d5b7ec64"
+  }]
+}

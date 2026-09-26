@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="你更喜欢哪一个 deepseek 拟人形象？投出你的一票，看看大家的选择。">
+  <title>你更喜欢哪一个 deepseek 拟人形象？</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <main>
+    <h1>你更喜欢哪一个 <span>deepseek</span> 拟人形象？</h1>
+    <section aria-label="选择你喜欢的形象">
+      <div class="results" aria-label="当前投票结果">
+        <div class="numbers"><span><strong id="left-count">—</strong> 票</span><span><strong id="right-count">—</strong> 票</span></div>
+        <div class="bar" role="img" aria-label="正在加载投票结果"><div id="left-bar"></div><div id="right-bar"></div></div>
+      </div>
+      <div class="choices">
+        <article>
+          <div class="art"><img src="./assets/left.png" width="1032" height="1238" alt="左边：蓝发、蓝领带、深色西装的 deepseek 拟人形象" fetchpriority="high"></div>
+          <p class="credit">设计者来自 小红书@<strong>ZIWWWWWW</strong></p>
+          <button type="button" data-choice="left" disabled>喜欢这个</button>
+        </article>
+        <article>
+          <div class="art"><img src="./assets/right.jpg" width="960" height="960" alt="右边：蓝发、女仆装的 Q 版 deepseek 拟人形象，气泡文字为好模型" fetchpriority="high"></div>
+          <p class="credit">AI 生成，原作者不详</p>
+          <button type="button" data-choice="right" disabled>喜欢这个</button>
+        </article>
+      </div>
+    </section>
+    <p id="status" role="status" aria-live="polite">正在获取票数…</p>
+    <p class="note">每个浏览器限投一次 · 票数每 3 秒更新</p>
+    <noscript><p>请开启 JavaScript 以查看票数和参与投票。</p></noscript>
+  </main>
+</body>
+</html>

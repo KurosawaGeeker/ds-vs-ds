@@ -1,0 +1,11 @@
+{
+  "name": "ds-vs-ds",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check docs/app.js && node --check api/worker.js",
+    "test": "node --test tests/*.test.js",
+    "dev:api": "wrangler dev --config api/wrangler.jsonc",
+    "deploy:api": "wrangler deploy --config api/wrangler.jsonc"
+  }
+}
