@@ -2,13 +2,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 const base = process.env.TEST_API || 'http://localhost:8787';
-const origin = 'https://kurosawageeker.github.io';
+const origin = 'https://ds-vs-ds.pages.dev';
 const voter = crypto.randomUUID();
 async function call(path, { id = voter, method = 'GET', body, source = origin } = {}) {
   return fetch(`${base}${path}`, { method, headers: { Origin: source, 'X-Voter-ID': id, 'Content-Type': 'application/json' }, body });
 }
 
 test('CORS, validation, atomic counts, duplicate and concurrent votes', async () => {
+  const legacy = await call('/results', { source: 'https://kurosawageeker.github.io' });
+  assert.equal(legacy.status, 200);
+  assert.equal(legacy.headers.get('access-control-allow-origin'), 'https://kurosawageeker.github.io');
   const before = await (await call('/results')).json();
   const preflight = await call('/vote', { method: 'OPTIONS' });
   assert.equal(preflight.status, 204);

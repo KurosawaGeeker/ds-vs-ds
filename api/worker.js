@@ -3,8 +3,9 @@ const VOTER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin');
+    const allowed = origin !== null && env.ALLOWED_ORIGINS.includes(origin);
     const headers = {
-      'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN,
+      'Access-Control-Allow-Origin': allowed ? origin : env.ALLOWED_ORIGINS[0],
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, X-Voter-ID',
       'Access-Control-Max-Age': '86400',
@@ -13,7 +14,7 @@ export default {
       'X-Content-Type-Options': 'nosniff',
     };
     const reply = (body, status = 200) => Response.json(body, { status, headers });
-    if (origin && origin !== env.ALLOWED_ORIGIN) return reply({ error: 'Origin not allowed' }, 403);
+    if (origin && !allowed) return reply({ error: 'Origin not allowed' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
     const path = new URL(request.url).pathname;
     if (path !== '/results' && path !== '/vote') return reply({ error: 'Not found' }, 404);
@@ -23,7 +24,7 @@ export default {
     try {
       const statements = [];
       if (path === '/vote') {
-        if (origin !== env.ALLOWED_ORIGIN || !voterId) return reply({ error: 'Invalid vote request' }, 403);
+        if (!allowed || !voterId) return reply({ error: 'Invalid vote request' }, 403);
         if (!request.headers.get('Content-Type')?.startsWith('application/json')) return reply({ error: 'JSON required' }, 415);
         // Bound streamed bodies as well as declared Content-Length.
         if (Number(request.headers.get('Content-Length')) > 128) return reply({ error: 'Body too large' }, 413);
