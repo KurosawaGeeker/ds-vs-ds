@@ -2,7 +2,8 @@
 
 极简 DeepSeek 拟人形象投票页。
 
-- 网页：https://ds-vs-ds.pages.dev/
+- 网页：https://ds-vs-ds.win/
+- 备用地址：https://ds-vs-ds.pages.dev/
 - 静态网页由 Cloudflare Pages 托管，API 使用独立的 Cloudflare Worker + D1。
 - 手机和电脑均为两图并列；图片完整显示、不裁切。左图来自小红书 @ZIWWWWWW，右图按站点提供者要求标注「AI 生成，原作者不详」。图片版权归各自权利人，不随源码授予使用许可。
 - 每 3 秒自动读取共享票数，切回页面时立即刷新。隐藏页面暂停请求；网络错误保留上次结果并自动重试。
@@ -29,7 +30,7 @@ npm run deploy:api
 
 网页发布命令：`wrangler pages deploy docs --project-name ds-vs-ds --branch feat/voting-site`。这是 Direct Upload 项目，推送 GitHub 不会自动发布到 Cloudflare。
 
-旧地址保留可用，GitHub Pages 从 `feat/voting-site` 分支的 `/docs` 目录发布。`docs/` 同时是前端源文件与发布目录：更新后提交并推送即可。后端需要单独发布。不要把 .env、令牌、Wrangler 本地状态或日志提交到仓库。
+GitHub Pages 已停用，GitHub 仓库仅保存源码。前端与后端分别发布到 Cloudflare。不要把 .env、令牌、Wrangler 本地状态或日志提交到仓库。
 
 ## 验证
 

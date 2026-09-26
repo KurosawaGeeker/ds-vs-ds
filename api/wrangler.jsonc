@@ -13,8 +13,8 @@
   },
   "vars": {
     "ALLOWED_ORIGINS": [
-      "https://ds-vs-ds.pages.dev",
-      "https://kurosawageeker.github.io"
+      "https://ds-vs-ds.win",
+      "https://ds-vs-ds.pages.dev"
     ]
   },
   "d1_databases": [
