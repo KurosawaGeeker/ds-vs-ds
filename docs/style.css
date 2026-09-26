@@ -24,7 +24,6 @@ button:focus-visible { outline: 3px solid #81a5eb; outline-offset: 4px; }
 button:disabled { cursor: default; color: #939bad; background: #f7f8fa; border-color: #e8ecf1; }
 button.selected { background: #2359b8; color: white; border-color: #2359b8; }
 #status { min-height: 20px; margin: 22px 0 0; text-align: center; color: #596984; font-size: 13px; line-height: 1.6; }
-.note { text-align: center; margin: 6px 0 0; color: #8790a0; font-size: 11px; line-height: 1.6; }
 noscript p { text-align: center; }
 @media (max-width: 640px) { main { padding-inline: 16px; } .choices { gap: 12px; } .art { border-radius: 7px; } .credit { font-size: 11px; min-height: 38px; margin: 10px 0 12px; } .numbers strong { font-size: 21px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
