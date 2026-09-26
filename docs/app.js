@@ -14,7 +14,7 @@ function updateButtons() {
     const chosen = selected === button.dataset.choice;
     button.disabled = !ready || submitting || selected !== null;
     button.classList.toggle('selected', chosen);
-    button.textContent = chosen ? '已投给这个' : submitting ? '提交中…' : '喜欢这个';
+    button.textContent = chosen ? '已投票' : submitting ? '提交中…' : '喜欢';
   }
 }
 

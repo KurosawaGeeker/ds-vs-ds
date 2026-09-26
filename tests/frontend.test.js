@@ -39,7 +39,7 @@ test('load results, vote, lock buttons and keep last counts on connection loss',
   await settle();
   assert.equal(app.element('#left-count').textContent, '1');
   assert.equal(app.element('#left-bar').style.width, '100%');
-  assert.equal(app.element('left').textContent, '已投给这个');
+  assert.equal(app.element('left').textContent, '已投票');
   assert.equal(app.element('left').disabled, true);
   assert.equal(app.element('right').disabled, true);
   app.element('right').click();
