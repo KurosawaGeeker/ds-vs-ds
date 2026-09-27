@@ -31,10 +31,11 @@ noscript p { text-align: center; }
 .ad-contact:hover { text-decoration: underline; text-underline-offset: 4px; }
 .ad-contact:focus-visible { outline: 3px solid #81a5eb; outline-offset: 2px; border-radius: 4px; }
 .side-ad { display: none; }
-@media (min-width: 1024px) {
-  body { display: grid; grid-template-columns: clamp(100px, 10vw, 160px) minmax(0, 900px) clamp(100px, 10vw, 160px); justify-content: center; gap: 20px; padding-inline: 20px; }
-  main { width: 100%; margin: 0; }
-  .side-ad { display: block; align-self: start; position: sticky; top: clamp(32px, 7vh, 76px); margin-top: clamp(32px, 7vh, 76px); height: clamp(280px, 70vh, 600px); }
+/* Keep the main column in normal flow even when a blocker hides/removes either ad. */
+@media (min-width: 1180px) and (min-height: 400px) {
+  .side-ad { display: block; position: fixed; top: clamp(32px, 7vh, 76px); width: clamp(100px, calc(50vw - 490px), 160px); height: min(600px, calc(100vh - 100px)); }
+  .side-ad--left { left: max(20px, calc(50% - 630px)); }
+  .side-ad--right { right: max(20px, calc(50% - 630px)); }
   .side-ad .ad-contact { font-size: clamp(22px, 2vw, 28px); }
   .side-ad .ad-contact span { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: .2em; }
 }
