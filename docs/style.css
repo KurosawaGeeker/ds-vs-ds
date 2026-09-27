@@ -25,5 +25,10 @@ button:disabled { cursor: default; color: #939bad; background: #f7f8fa; border-c
 button.selected { background: #2359b8; color: white; border-color: #2359b8; }
 #status { min-height: 20px; margin: 22px 0 0; text-align: center; color: #596984; font-size: 13px; line-height: 1.6; }
 noscript p { text-align: center; }
+.advertising { margin-top: 32px; text-align: center; }
+.ad-slot { width: 100%; height: clamp(100px, 16vw, 150px); border: 1px dashed #d4ddeb; border-radius: 7px; background: #fafbfe; }
+.ad-contact { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 6px; padding: 0 12px; color: #2359b8; font-size: 13px; text-decoration: none; }
+.ad-contact:hover { text-decoration: underline; text-underline-offset: 4px; }
+.ad-contact:focus-visible { outline: 3px solid #81a5eb; outline-offset: 2px; border-radius: 4px; }
 @media (max-width: 640px) { main { padding-inline: 16px; } .choices { gap: 12px; } .art { border-radius: 7px; } .credit { font-size: 11px; min-height: 38px; margin: 10px 0 12px; } .numbers strong { font-size: 21px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
