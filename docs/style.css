@@ -26,6 +26,22 @@ button.selected { background: #2359b8; color: white; border-color: #2359b8; }
 #status { min-height: 20px; margin: 22px 0 0; text-align: center; color: #596984; font-size: 13px; line-height: 1.6; }
 noscript p { text-align: center; }
 .advertising { margin-top: 32px; text-align: center; }
+.sponsor-banner { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 20px; min-height: 150px; padding: 20px; border: 1px solid #cbdcf4; border-radius: 7px; background: #f4f8ff; color: #202b41; text-align: left; text-decoration: none; }
+.sponsor-banner:hover { border-color: #2359b8; background: #edf4ff; }
+.sponsor-banner:focus-visible { outline: 3px solid #81a5eb; outline-offset: 4px; }
+.sponsor-logo { display: block; width: 96px; height: 96px; object-fit: contain; border-radius: 6px; }
+.sponsor-copy { display: grid; gap: 5px; min-width: 0; line-height: 1.5; }
+.sponsor-label { color: #657189; font-size: 11px; }
+.sponsor-title { font-size: clamp(19px, 2.5vw, 26px); font-weight: 650; }
+.sponsor-title em { color: #2359b8; font-style: normal; }
+.sponsor-rates { font-size: 13px; }
+.sponsor-detail { color: #596984; font-size: 12px; }
+.sponsor-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 10px 16px; border-radius: 6px; background: #2359b8; color: #fff; font-size: 14px; font-weight: 600; white-space: nowrap; }
+@media (max-width: 640px) {
+  .sponsor-banner { grid-template-columns: 64px minmax(0, 1fr); gap: 12px; padding: 16px; }
+  .sponsor-logo { width: 64px; height: 64px; }
+  .sponsor-cta { grid-column: 2; justify-self: start; }
+}
 .ad-slot { width: 100%; height: clamp(100px, 16vw, 150px); border: 1px dashed #d4ddeb; border-radius: 7px; background: #fafbfe; }
 .ad-contact { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 16px; color: #2359b8; font-size: clamp(20px, 3vw, 28px); font-weight: 600; text-decoration: none; }
 .ad-contact:hover { text-decoration: underline; text-underline-offset: 4px; }
