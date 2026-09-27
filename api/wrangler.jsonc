@@ -7,6 +7,14 @@
   ],
   "account_id": "ff0ba28c202a47ac5518df8074d9481b",
   "workers_dev": true,
+  "routes": [{ "pattern": "ds-vs-ds.win/api/*", "zone_id": "aeaef54fdf58aa3f823cfdd3a3125e4b" }],
+  "ratelimits": [
+    { "name": "VOTE_LIMIT", "namespace_id": "270901", "simple": { "limit": 5, "period": 60 } },
+    { "name": "VOTE_GLOBAL_LIMIT", "namespace_id": "270902", "simple": { "limit": 120, "period": 60 } },
+    { "name": "SELECTION_LIMIT", "namespace_id": "270903", "simple": { "limit": 30, "period": 60 } },
+    { "name": "RESULTS_REFRESH", "namespace_id": "270904", "simple": { "limit": 1, "period": 10 } },
+    { "name": "DB_READ_LIMIT", "namespace_id": "270905", "simple": { "limit": 300, "period": 60 } }
+  ],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 0.01
