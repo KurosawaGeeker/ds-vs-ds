@@ -1,9 +1,22 @@
+import { leadingZeroBits, powDifficulty } from './pow.js';
+
 const VOTER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FRESH_MS = 10000;
 
 function logFailure(event, error) {
   // Never log request bodies, tokens or voter identities.
   console.error(JSON.stringify({ event, message: String(error?.message || error).slice(0, 300) }));
+}
+
+// Validated ballots must carry fresh proof of work: one hash to verify here,
+// about 2^difficulty hashes to mint, which scripted farms pay per attempt.
+async function challengeMet(env, voterId, choice, token, nonce) {
+  const difficulty = powDifficulty(env);
+  if (difficulty < 1) return true;
+  if (typeof nonce !== 'string' || !/^\d{1,48}$/.test(nonce)) return false;
+  const message = new TextEncoder().encode(`${voterId}:${choice}:${token}:${nonce}`);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', message));
+  return leadingZeroBits(digest) >= difficulty;
 }
 
 async function readTotals(env) {
@@ -61,7 +74,7 @@ export default {
       if (path === '/selection') {
         if (!(await env.SELECTION_LIMIT.limit({ key: ip })).success || !(await env.DB_READ_LIMIT.limit({ key: 'selection' })).success) return busy();
         const row = await env.DB.prepare('SELECT choice FROM votes WHERE voter_id = ?').bind(voterId).first();
-        return reply({ selected: row?.choice ?? null });
+        return reply({ selected: row?.choice ?? null, pow: { difficulty: powDifficulty(env) } });
       }
       if (!allowed) return reply({ error: 'Invalid vote request' }, 403);
       if (!(await env.VOTE_LIMIT.limit({ key: ip })).success) return busy();
@@ -84,6 +97,11 @@ export default {
       try { body = JSON.parse(raw); } catch { return reply({ error: 'Invalid JSON' }, 400); }
       if (body?.choice !== 'left' && body?.choice !== 'right') return reply({ error: 'Invalid choice' }, 400);
       if (typeof body.token !== 'string' || !body.token || body.token.length > 2048) return reply({ error: 'verification_required' }, 403);
+      // Cheap local check first: siteverify is a one-use-token call, so a
+      // failed proof here must not burn the token the client may retry with.
+      if (!(await challengeMet(env, voterId, body.choice, body.token, body.nonce))) {
+        return reply({ error: 'pow_failed', difficulty: powDifficulty(env) }, 403);
+      }
       if (!env.TURNSTILE_SECRET_KEY) return reply({ error: 'Verification unavailable' }, 503);
       const verification = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
         method: 'POST',

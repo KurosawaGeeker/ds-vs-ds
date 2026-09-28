@@ -23,7 +23,8 @@
     "ALLOWED_ORIGINS": [
       "https://ds-vs-ds.win",
       "https://ds-vs-ds.pages.dev"
-    ]
+    ],
+    "POW_DIFFICULTY": "18"
   },
   "d1_databases": [
     {
