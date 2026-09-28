@@ -84,13 +84,14 @@ export function leadingZeroBits(digest) {
 }
 
 // Difficulty from the environment. Unset or invalid values fall back to the
-// default rather than disabling the check: a typo in the setting must fail
-// safe. Only an explicit 0 acts as the kill switch.
+// default rather than disabling the check: a typo or stray whitespace in the
+// setting must fail safe. Only an explicit '0' acts as the kill switch.
 export function powDifficulty(env) {
   const raw = env?.POW_DIFFICULTY;
   if (raw === undefined || raw === null || raw === '') return 18;
-  const value = Number(raw);
-  if (value === 0) return 0;
+  const trimmed = typeof raw === 'string' ? raw.trim() : raw;
+  if (trimmed === '0' || trimmed === 0) return 0;
+  const value = Number(trimmed);
   if (!Number.isFinite(value) || value < 1) return 18;
   return Math.min(Math.floor(value), 32);
 }

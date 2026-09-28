@@ -49,12 +49,16 @@ async function withTurnstileStub(run) {
   try { return await run(); } finally { globalThis.fetch = original; }
 }
 
-test('difficulty parsing: unset defaults to 18, only explicit zero disables, junk falls back', () => {
+test('difficulty parsing: unset defaults to 18, only an explicit zero disables, junk falls back', () => {
   assert.equal(powDifficulty({}), 18);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '20' }), 20);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '0' }), 0);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: ' 0 ' }), 0);
   assert.equal(powDifficulty({ POW_DIFFICULTY: 0 }), 0);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '' }), 18);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: ' ' }), 18);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: '00' }), 18);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: '0.0' }), 18);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '-3' }), 18);
   assert.equal(powDifficulty({ POW_DIFFICULTY: 'abc' }), 18);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '18bits' }), 18);
