@@ -49,12 +49,16 @@ async function withTurnstileStub(run) {
   try { return await run(); } finally { globalThis.fetch = original; }
 }
 
-test('difficulty parsing: unset defaults to 18, zero and junk disable, values clamp at 32', () => {
+test('difficulty parsing: unset defaults to 18, only explicit zero disables, junk falls back', () => {
   assert.equal(powDifficulty({}), 18);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '20' }), 20);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '0' }), 0);
-  assert.equal(powDifficulty({ POW_DIFFICULTY: '-3' }), 0);
-  assert.equal(powDifficulty({ POW_DIFFICULTY: 'abc' }), 0);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: 0 }), 0);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: '' }), 18);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: '-3' }), 18);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: 'abc' }), 18);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: '18bits' }), 18);
+  assert.equal(powDifficulty({ POW_DIFFICULTY: '0.5' }), 18);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '99' }), 32);
   assert.equal(powDifficulty({ POW_DIFFICULTY: '2.7' }), 2);
 });
@@ -82,9 +86,19 @@ test('mine returns nonces whose WebCrypto digest meets the difficulty', async ()
   }
 });
 
+// A nonce that provably fails difficulty 8: constant guesses like '0' could
+// theoretically satisfy it, so pick the first candidate with measured work
+// below the difficulty and assert the precondition.
+function weakNonce(base) {
+  const nonce = [0, 1, 2, 3, 4].find(n => leadingZeroBits(sha256Bytes(`${base}:${n}`)) < 8);
+  assert.ok(nonce !== undefined, 'no weak nonce found in the first five candidates');
+  return String(nonce);
+}
+
 test('ballots without a nonce, with worthless work, or malformed nonces fail closed before D1', async () => {
   await withTurnstileStub(async () => {
-    for (const nonce of [undefined, '', '0', '000', '-1', '12a', '1'.repeat(49), 12, null]) {
+    const weak = weakNonce(`${id}:left:solved`);
+    for (const nonce of [undefined, '', weak, weak.padStart(3, '0'), '-1', '12a', '1'.repeat(49), 12, null]) {
       const body = { choice: 'left', token: 'solved' };
       if (nonce !== undefined) body.nonce = nonce;
       const response = await worker.fetch(makeRequest(body), environment());
@@ -105,7 +119,7 @@ test('a failed proof of work does not consume the one-use Turnstile token', asyn
   try {
     const db = makeDb();
     // Worthless work is rejected locally; the token must remain usable.
-    const bad = await worker.fetch(makeRequest({ choice: 'left', token: 'solved', nonce: '0' }), environment({ DB: db }));
+    const bad = await worker.fetch(makeRequest({ choice: 'left', token: 'solved', nonce: weakNonce(`${id}:left:solved`) }), environment({ DB: db }));
     assert.equal(bad.status, 403);
     const payload = await bad.json();
     assert.deepEqual(payload, { error: 'pow_failed', difficulty: 8 });
@@ -126,7 +140,10 @@ test('a ballot with sufficient work is accepted and recorded, and difficulty 0 s
     assert.equal(payload.left, 1); assert.equal(payload.right, 0); assert.equal(payload.selected, 'left');
     assert.deepEqual(db.state.inserted, [id, 'left']);
     // The same work must not satisfy a higher difficulty.
-    const harder = await worker.fetch(makeRequest({ choice: 'right', token: 'solved', nonce: await mine(`${id}:right:solved`, 8) }), environment({ DB: db, POW_DIFFICULTY: '24' }));
+    const low = await mine(`${id}:right:solved`, 8);
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${id}:right:solved:${low}`)));
+    assert.ok(leadingZeroBits(digest) < 24, 'precondition: the low-work nonce must not reach difficulty 24');
+    const harder = await worker.fetch(makeRequest({ choice: 'right', token: 'solved', nonce: low }), environment({ DB: db, POW_DIFFICULTY: '24' }));
     assert.equal(harder.status, 403);
     // Disabled PoW accepts ballots without a nonce.
     const open = await worker.fetch(makeRequest({ choice: 'right', token: 'solved' }), environment({ DB: db, POW_DIFFICULTY: '0' }));

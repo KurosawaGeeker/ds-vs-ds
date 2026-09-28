@@ -83,14 +83,15 @@ export function leadingZeroBits(digest) {
   return bits;
 }
 
-// Difficulty from the environment: unset defaults to 18 (about a second on a
-// mid-range phone), and 0 or any invalid value disables the check entirely
-// (the production kill switch).
+// Difficulty from the environment. Unset or invalid values fall back to the
+// default rather than disabling the check: a typo in the setting must fail
+// safe. Only an explicit 0 acts as the kill switch.
 export function powDifficulty(env) {
   const raw = env?.POW_DIFFICULTY;
-  if (raw === undefined) return 18;
+  if (raw === undefined || raw === null || raw === '') return 18;
   const value = Number(raw);
-  if (!Number.isFinite(value) || value < 1) return 0;
+  if (value === 0) return 0;
+  if (!Number.isFinite(value) || value < 1) return 18;
   return Math.min(Math.floor(value), 32);
 }
 
