@@ -95,6 +95,27 @@ test('ballots without a nonce, with worthless work, or malformed nonces fail clo
   });
 });
 
+test('a failed proof of work does not consume the one-use Turnstile token', async () => {
+  const original = globalThis.fetch;
+  let siteverifyCalls = 0;
+  globalThis.fetch = async () => {
+    siteverifyCalls++;
+    return Response.json({ success: true, hostname: 'ds-vs-ds.win', action: 'vote', cdata: id });
+  };
+  try {
+    const db = makeDb();
+    // Worthless work is rejected locally; the token must remain usable.
+    const bad = await worker.fetch(makeRequest({ choice: 'left', token: 'solved', nonce: '0' }), environment({ DB: db }));
+    assert.equal(bad.status, 403);
+    const payload = await bad.json();
+    assert.deepEqual(payload, { error: 'pow_failed', difficulty: 8 });
+    assert.equal(siteverifyCalls, 0);
+    const good = await worker.fetch(makeRequest({ choice: 'left', token: 'solved', nonce: await mine(`${id}:left:solved`, 8) }), environment({ DB: db }));
+    assert.equal(good.status, 200);
+    assert.equal(siteverifyCalls, 1);
+  } finally { globalThis.fetch = original; }
+});
+
 test('a ballot with sufficient work is accepted and recorded, and difficulty 0 skips the check', async () => {
   await withTurnstileStub(async () => {
     const db = makeDb();

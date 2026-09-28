@@ -97,6 +97,11 @@ export default {
       try { body = JSON.parse(raw); } catch { return reply({ error: 'Invalid JSON' }, 400); }
       if (body?.choice !== 'left' && body?.choice !== 'right') return reply({ error: 'Invalid choice' }, 400);
       if (typeof body.token !== 'string' || !body.token || body.token.length > 2048) return reply({ error: 'verification_required' }, 403);
+      // Cheap local check first: siteverify is a one-use-token call, so a
+      // failed proof here must not burn the token the client may retry with.
+      if (!(await challengeMet(env, voterId, body.choice, body.token, body.nonce))) {
+        return reply({ error: 'pow_failed', difficulty: powDifficulty(env) }, 403);
+      }
       if (!env.TURNSTILE_SECRET_KEY) return reply({ error: 'Verification unavailable' }, 503);
       const verification = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
         method: 'POST',
@@ -107,10 +112,6 @@ export default {
       const verified = await verification.json();
       if (!verified.success || !env.ALLOWED_ORIGINS.some(value => new URL(value).hostname === verified.hostname) || verified.action !== 'vote' || verified.cdata !== voterId) {
         return reply({ error: 'verification_failed' }, 403);
-      }
-      // Invalid work must not consume the shared database write budget.
-      if (!(await challengeMet(env, voterId, body.choice, body.token, body.nonce))) {
-        return reply({ error: 'pow_failed', difficulty: powDifficulty(env) }, 403);
       }
       // Invalid bot submissions must not consume the shared database write budget.
       if (!(await env.VOTE_GLOBAL_LIMIT.limit({ key: 'vote' })).success) return busy();
