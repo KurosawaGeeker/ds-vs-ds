@@ -11,7 +11,8 @@ const request = (body, path = '/api/vote') => new Request(`https://ds-vs-ds.win$
   ...(body ? { body: JSON.stringify(body) } : {}),
 });
 function environment(overrides = {}) {
-  return { ALLOWED_ORIGINS: ['https://ds-vs-ds.win'], VOTE_LIMIT: allow, VOTE_GLOBAL_LIMIT: allow, RESULTS_REFRESH: allow, SELECTION_LIMIT: allow, DB_READ_LIMIT: allow, TURNSTILE_SECRET_KEY: 'test-only', DB: { prepare() { throw new Error('Database must not be reached'); } }, ...overrides };
+  // PoW is disabled here; its worker behaviour is covered by pow.test.js.
+  return { ALLOWED_ORIGINS: ['https://ds-vs-ds.win'], VOTE_LIMIT: allow, VOTE_GLOBAL_LIMIT: allow, RESULTS_REFRESH: allow, SELECTION_LIMIT: allow, DB_READ_LIMIT: allow, TURNSTILE_SECRET_KEY: 'test-only', POW_DIFFICULTY: '0', DB: { prepare() { throw new Error('Database must not be reached'); } }, ...overrides };
 }
 
 test('missing verification and rate-limited requests never reach D1', async () => {

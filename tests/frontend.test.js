@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../docs/app.js', import.meta.url), 'utf8');
 const settle = () => new Promise(resolve => setImmediate(resolve));
-function page({ failStorage = false } = {}) {
+function page({ failStorage = false, pow = 0 } = {}) {
   const elements = new Map();
   function element(key) {
     if (!elements.has(key)) elements.set(key, { textContent: '', disabled: true, hidden: false, style: {}, dataset: { choice: key }, classList: { toggle() {} }, setAttribute() {}, addEventListener(name, handler) { this[name] = handler; } });
@@ -15,6 +15,7 @@ function page({ failStorage = false } = {}) {
   const calls = [];
   let failNetwork = false;
   let voteStatus = 200;
+  let voteErrorBody = null;
   let clock = 100000;
   let timer;
   let challenge;
@@ -24,19 +25,22 @@ function page({ failStorage = false } = {}) {
     document: { hidden: false, querySelector: key => key === '#turnstile-script' ? script || null : element(key), querySelectorAll: () => [element('left'), element('right')], addEventListener() {}, createElement() { return {}; }, head: { append(value) { script = value; context.window.onTurnstileReady(); } } },
     window: { addEventListener() {}, turnstile: { render(_, options) { challenge = options; return 0; }, reset() { resets++; } } },
     localStorage: { getItem: () => null, setItem() { if (failStorage) throw new Error('blocked'); } },
-    crypto, Intl, AbortSignal, Date: { now: () => clock },
+    crypto, Intl, AbortSignal, Date: { now: () => clock }, TextEncoder,
     setTimeout(callback, delay) { timer = { callback, delay }; return 1; }, clearTimeout() {},
     async fetch(url, options) {
       calls.push({ url, options });
       if (failNetwork) throw new Error('offline');
       const code = url.endsWith('/vote') ? voteStatus : 200;
       if (url.endsWith('/vote') && code === 200 && !counts.selected) { counts.selected = JSON.parse(options.body).choice; counts[counts.selected]++; }
-      const data = url.endsWith('/selection') ? { selected: counts.selected } : url.endsWith('/results') ? { left: counts.left, right: counts.right, updatedAt: clock } : { ...counts };
+      const data = url.endsWith('/selection') ? { selected: counts.selected, ...(pow ? { pow: { difficulty: pow } } : {}) }
+        : url.endsWith('/results') ? { left: counts.left, right: counts.right, updatedAt: clock }
+        : url.endsWith('/vote') && code !== 200 && voteErrorBody ? voteErrorBody
+        : { ...counts };
       return { ok: code === 200, status: code, headers: { get: () => code === 429 ? '60' : null }, async json() { return data; } };
     },
   };
   vm.runInNewContext(source, context);
-  return { element, counts, calls, verify: () => challenge.callback('valid-token'), expire: () => challenge['expired-callback'](), get resets() { return resets; }, tick: () => { clock += timer.delay; timer.callback(); }, get delay() { return timer.delay; }, disconnect: () => { failNetwork = true; }, rejectVote(code) { voteStatus = code; } };
+  return { element, counts, calls, verify: () => challenge.callback('valid-token'), expire: () => challenge['expired-callback'](), get resets() { return resets; }, tick: () => { clock += timer.delay; timer.callback(); }, get delay() { return timer.delay; }, disconnect: () => { failNetwork = true; }, rejectVote(code, body) { voteStatus = code; voteErrorBody = body ?? null; } };
 }
 
 test('public counts, verification gate, vote once, and offline backoff preserving counts', async () => {
@@ -83,4 +87,34 @@ test('storage failure gives actionable feedback and keeps voting disabled', () =
   const app = page({ failStorage: true });
   assert.match(app.element('#status').textContent, /本地存储/);
   assert.equal(app.element('left').disabled, true);
+});
+
+test('server-requested proof of work is attached to the ballot and satisfies the difficulty', async () => {
+  const app = page({ pow: 12 }); await settle();
+  app.verify(); app.element('left').click(); await settle();
+  const voter = app.calls.find(call => call.url.endsWith('/selection')).options.headers['X-Voter-ID'];
+  const ballot = JSON.parse(app.calls.find(call => call.url.endsWith('/vote')).options.body);
+  assert.equal(ballot.choice, 'left');
+  assert.match(String(ballot.nonce), /^\d+$/);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${voter}:left:valid-token:${ballot.nonce}`)));
+  let bits = 0;
+  for (const byte of digest) { if (byte === 0) { bits += 8; continue; } bits += Math.clz32(byte) - 24; break; }
+  assert.ok(bits >= 12, `nonce only has ${bits} leading zero bits`);
+  assert.equal(app.counts.left, 1);
+});
+
+test('a rejected work check keeps the token, adopts the harder difficulty and allows retry', async () => {
+  const app = page({ pow: 12 }); await settle();
+  app.verify(); app.rejectVote(403, { error: 'pow_failed', difficulty: 20 });
+  app.element('left').click(); await settle();
+  assert.equal(app.calls.filter(call => call.url.endsWith('/vote')).length, 1);
+  assert.equal(app.resets, 0);
+  assert.match(app.element('#status').textContent, /重新提交/);
+  assert.equal(app.element('left').disabled, false);
+  // Other 403 responses still re-challenge.
+  const app2 = page({ pow: 12 }); await settle();
+  app2.verify(); app2.rejectVote(403);
+  app2.element('left').click(); await settle();
+  assert.match(app2.element('#status').textContent, /重新完成安全验证/);
+  assert.equal(app2.element('left').disabled, true);
 });
